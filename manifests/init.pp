@@ -15,6 +15,8 @@
 # @param profile_options
 #   What options should we pass to authselect
 #   ie, what features should be enabled/disabled?
+# @param custom_profiles
+#   Custom profiles to manage
 class authselect (
   Boolean $package_manage,
   String  $package_ensure,
@@ -23,36 +25,19 @@ class authselect (
   Boolean $profile_manage,
   String[1] $profile,
   Array[String, 0] $profile_options,
+  Hash $custom_profiles,
 ) {
-
   if $package_manage {
-    package { $package_names:
-      ensure => $package_ensure
-    }
+    include 'authselect::package'
   }
 
-  if $profile_manage {
-    unless $package_ensure == 'absent' {
-      if $facts['authselect_profile_features'] {
-        $current_features = sort($facts['authselect_profile_features'])
-      } else {
-        $current_features = []
-      }
-      $requested_features = sort($profile_options)
-      $requested_features_string = join($requested_features, ' ')
+  if $profile_manage and $package_ensure != 'absent' {
+    include 'authselect::config'
+  }
 
-      if join($current_features, ' ') != $requested_features_string {
-        exec { "authselect set profile=${profile} features=${requested_features}":
-          path    => ['/usr/bin', '/usr/sbin',],
-          command => "authselect select ${profile} ${requested_features_string} --force",
-        }
-      } else {
-        exec { "authselect set profile=${profile} features=${requested_features}":
-          path    => ['/usr/bin', '/usr/sbin',],
-          command => "authselect select ${profile} ${requested_features_string} --force",
-          unless  => 'authselect check',
-        }
-      }
+  $custom_profiles.each |$key, $value| {
+    authselect::custom_profile { $key:
+      * => $value,
     }
   }
 }
