@@ -126,6 +126,37 @@ describe 'authselect' do
           unless: 'authselect check'
         }) }
       end
+
+      context 'yes package, yes profile, creating a custom profile' do
+        before(:each) do
+          os_facts[:authselect_profile] = 'minimal'
+        end
+
+        let(:params) do
+          {
+            'package_manage' => true,
+            'profile_manage' => true,
+            'profile' => 'custom/testing',
+            'custom_profiles' => {
+              'testing' => {
+                'base_profile' => 'sssd',
+              }
+            }
+          }
+        end
+
+        it { is_expected.to compile }
+        it { is_expected.to have_package_resource_count(1) }
+        # Need to figure out how to mock up authselect check before this works
+        # it { is_expected.to have_exec_resource_count(1) }
+        it { is_expected.to contain_package('authselect').with_ensure('present') }
+        it { is_expected.to contain_exec('authselect set profile=custom/testing features=[]').with({
+          command: 'authselect select custom/testing  --force'
+        }) }
+        it { is_expected.to contain_exec('authselect create-profile -b sssd testing').with({
+          creates: '/etc/authselect/custom/testing'
+        }) }
+      end
     end
   end
 end
