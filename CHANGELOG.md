@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## Release 1.0.0
+* Added the ability for users to create and manage custom profiles
+
 ## Release 0.1.3
 
 **Bug Fixes**
